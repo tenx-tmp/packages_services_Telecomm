@@ -51,6 +51,7 @@ import android.os.RemoteException;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -1315,16 +1316,14 @@ public class InCallController extends CallsManagerListenerBase implements
     @Override
     public void onCallStateChanged(Call call, int oldState, int newState) {
         maybeTrackMicrophoneUse(isMuted());
-        boolean vibrateOnConnect = Settings.System.getIntForUser(mContext.getContentResolver(),
-            Settings.System.INCALL_FEEDBACK_VIBRATE, 0, UserHandle.USER_CURRENT) == 1;
-        boolean vibrateOnDisconnect = Settings.System.getIntForUser(mContext.getContentResolver(),
+        boolean shouldVibrate = Settings.System.getIntForUser(mContext.getContentResolver(),
             Settings.System.INCALL_FEEDBACK_VIBRATE, 0, UserHandle.USER_CURRENT) == 1;
 
         if ((oldState == CallState.ANSWERED || oldState == CallState.DIALING) &&
-                newState == CallState.ACTIVE && vibrateOnConnect) {
+                newState == CallState.ACTIVE && shouldVibrate) {
             vibrate(CALL_CONNECT_EFFECT);
         } else if (oldState == CallState.ACTIVE && newState == CallState.DISCONNECTED
-                && vibrateOnDisconnect) {
+                && shouldVibrate) {
             vibrate(CALL_DISCONNECT_EFFECT);
         }
         updateCall(call);
@@ -2413,7 +2412,8 @@ public class InCallController extends CallsManagerListenerBase implements
 
     public void vibrate(VibrationEffect effect) {
         if (mVibrator.hasVibrator()) {
-            mVibrator.vibrate(effect);
+            mVibrator.vibrate(effect,
+                VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ACCESSIBILITY));
         }
     }
 }
